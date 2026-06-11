@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IIOP | Institutional Investment Operations Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-deep:#060a12;--bg-primary:#0a0f1a;--bg-secondary:#0e1526;--bg-card:#121a2e;
+            --bg-elevated:#162038;--bg-hover:#1a2540;
+            --border-subtle:#1a2540;--border-medium:#243050;--border-accent:#2a3a60;
+            --text-primary:#e8ecf4;--text-secondary:#94a3be;--text-muted:#5a6b85;--text-dim:#3d4d65;
+            --gold:#c8a55a;--gold-light:#e0c67a;--gold-dark:#a08040;
+            --green:#22c55e;--green-dim:rgba(34,197,94,0.12);
+            --amber:#f59e0b;--amber-dim:rgba(245,158,11,0.12);
+            --red:#ef4444;--red-dim:rgba(239,68,68,0.1);
+            --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.1);
+            --teal:#14b8a6;
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{
+            background:var(--bg-deep);color:var(--text-primary);
+            font-family:'Source Serif 4',Georgia,serif;
+            -webkit-font-smoothing:antialiased;overflow:hidden;height:100vh;
+        }
+        body::before{
+            content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+            background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.4'/%3E%3C/svg%3E");
+            opacity:0.025;
+        }
+        ::-webkit-scrollbar{width:5px;height:5px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:var(--border-medium);border-radius:3px}
+
+        .font-display{font-family:'Cormorant Garamond',Georgia,serif}
+        .font-mono{font-family:'DM Mono','Courier New',monospace}
+        .font-body{font-family:'Source Serif 4',Georgia,serif}
+
+        .app-shell{display:flex;height:100vh;overflow:hidden}
+
+        /* Sidebar */
+        .sidebar{
+            width:260px;min-width:260px;
+            background:linear-gradient(180deg,#0c1220,#0a0f1a);
+            border-right:1px solid var(--border-subtle);
+            display:flex;flex-direction:column;z-index:10;overflow-y:auto;position:relative;
+        }
+        .sidebar::after{
+            content:'';position:absolute;right:0;top:0;bottom:0;width:1px;
+            background:linear-gradient(180deg,transparent,var(--gold-dark),transparent);opacity:.25;
+        }
+        .sidebar-logo{padding:24px 24px 20px;border-bottom:1px solid var(--border-subtle)}
+        .sidebar-logo h1{
+            font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;
+            letter-spacing:.18em;color:var(--gold);line-height:1;
+        }
+        .sidebar-logo .sub{
+            font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim);
+            letter-spacing:.12em;text-transform:uppercase;margin-top:6px;display:block;
+        }
+        .nav-section{
+            padding:18px 24px 6px;font-family:'DM Mono',monospace;font-size:9px;
+            text-transform:uppercase;letter-spacing:.15em;color:var(--text-dim);font-weight:500;
+        }
+        .nav-item{
+            display:flex;align-items:center;gap:12px;padding:9px 20px;margin:1px 12px;
+            border-radius:6px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11.5px;
+            color:var(--text-muted);transition:all .2s;border:1px solid transparent;position:relative;
+        }
+        .nav-item:hover{background:var(--bg-elevated);color:var(--text-secondary);border-color:var(--border-subtle)}
+        .nav-item.active{background:rgba(200,165,90,.06);color:var(--gold);border-color:rgba(200,165,90,.18)}
+        .nav-item.active::before{
+            content:'';position:absolute;left:-12px;top:50%;transform:translateY(-50%);
+            width:3px;height:20px;background:var(--gold);border-radius:0 2px 2px 0;
+        }
+        .nav-icon{width:18px;text-align:center;font-size:13px;flex-shrink:0;opacity:.7}
+        .nav-item.active .nav-icon{opacity:1}
+        .nav-badge{
+            margin-left:auto;background:var(--red-dim);color:var(--red);
+            font-size:9px;padding:2px 7px;border-radius:10px;font-family:'DM Mono',monospace;
+        }
+        .sidebar-footer{
+            margin-top:auto;padding:16px 24px;border-top:1px solid var(--border-subtle);
+            font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim);
+            letter-spacing:.06em;
+        }
+
+        /* Main */
+        .main-content{flex:1;overflow-y:auto;background:var(--bg-primary)}
+
+        /* Top bar */
+        .top-bar{
+            position:sticky;top:0;z-index:20;
+            background:rgba(10,15,26,.88);backdrop-filter:blur(14px);
+            border-bottom:1px solid var(--border-subtle);
+            padding:11px 32px;display:flex;align-items:center;justify-content:space-between;
+        }
+        .breadcrumb{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--text-dim);display:flex;align-items:center;gap:8px}
+        .breadcrumb .sep{color:var(--text-dim);opacity:.4}
+        .breadcrumb .cur{color:var(--text-secondary)}
+        .top-right{display:flex;align-items:center;gap:14px}
+        .search-box{
+            background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:6px;
+            padding:7px 14px 7px 32px;font-family:'DM Mono',monospace;font-size:11px;
+            color:var(--text-secondary);width:220px;outline:none;transition:border-color .2s;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%233d4d65' stroke-width='1.5'%3E%3Ccircle cx='6' cy='6' r='4.5'/%3E%3Cpath d='M10 10l3 3'/%3E%3C/svg%3E");
+            background-repeat:no-repeat;background-position:10px center;
+        }
+        .search-box:focus{border-color:var(--gold-dark)}
+        .search-box::placeholder{color:var(--text-dim);font-size:10px}
+        .notif-btn{
+            position:relative;background:var(--bg-card);border:1px solid var(--border-subtle);
+            border-radius:6px;padding:7px 10px;cursor:pointer;color:var(--text-muted);
+            font-size:14px;transition:all .2s;
+        }
+        .notif-btn:hover{border-color:var(--border-medium);color:var(--text-secondary)}
+        .notif-dot{
+            position:absolute;top:5px;right:5px;width:6px;height:6px;
+            background:var(--red);border-radius:50%;box-shadow:0 0 6px rgba(239,68,68,.6);
+        }
+        .clock{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dim);letter-spacing:.04em;min-width:140px;text-align:right}
+
+        /* Module area */
+        .module-area{padding:28px 32px 60px}
+        .module{display:none}
+        .module.active{display:block;animation:fadeModule .35s ease}
+        @keyframes fadeModule{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+        /* Page header */
+        .page-title{font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:var(--text-primary);letter-spacing:.02em;line-height:1.2}
+        .page-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:5px;letter-spacing:.04em}
+
+        /* Cards */
+        .card{
+            background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:10px;
+            padding:20px 22px;position:relative;overflow:hidden;
+            transition:border-color .25s,box-shadow .25s,transform .2s;
+        }
+        .card::before{
+            content:'';position:absolute;top:0;left:0;right:0;height:1px;
+            background:linear-gradient(90deg,transparent,rgba(200,165,90,.12),transparent);
+        }
+        .card:hover{border-color:var(--border-medium);box-shadow:0 6px 24px rgba(0,0,0,.3);transform:translateY(-1px)}
+        .card-header{
+            font-family:'DM Mono',monospace;font-size:9px;text-transform:uppercase;
+            letter-spacing:.12em;color:var(--text-dim);font-weight:500;margin-bottom:10px;
+        }
+        .card-value{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:600;letter-spacing:-.02em;color:var(--text-primary);line-height:1}
+        .card-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:6px}
+
+        .metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px;margin-bottom:20px}
+        .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+        .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+
+        /* Stagger animation */
+        .si{opacity:0;animation:fadeUp .5s ease forwards}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+        /* Semaphore */
+        .sem{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;flex-shrink:0}
+        .sem.g{background:var(--green);box-shadow:0 0 8px rgba(34,197,94,.5)}
+        .sem.a{background:var(--amber);box-shadow:0 0 8px rgba(245,158,11,.5)}
+        .sem.r{background:var(--red);box-shadow:0 0 8px rgba(239,68,68,.5)}
+
+        /* Badge */
+        .badge{
+            display:inline-flex;align-items:center;padding:3px 10px;border-radius:4px;
+            font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.04em;gap:4px;
+        }
+        .badge-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+        .badge-amber{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,158,11,.2)}
+        .badge-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.18)}
+        .badge-blue{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,.18)}
+        .badge-gold{background:rgba(200,165,90,.1);color:var(--gold);border:1px solid rgba(200,165,90,.18)}
+
+        /* Tables */
+        .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border-subtle);background:var(--bg-card)}
+        .data-table{width:100%;border-collapse:collapse;font-family:'DM Mono',monospace;font-size:11px}
+        .data-table th{
+            text-align:left;padding:11px 14px;font-size:9px;text-transform:uppercase;
+            letter-spacing:.1em;color:var(--text-dim);font-weight:500;
+            border-bottom:1px solid var(--border-medium);background:var(--bg-secondary);position:sticky;top:0;z-index:5;
+        }
+        .data-table td{
+            padding:10px 14px;border-bottom:1px solid rgba(26,37,64,.45);
+            color:var(--text-secondary);font-weight:400;vertical-align:middle;
+        }
+        .data-table tr{transition:background .15s}
+        .data-table tr:hover td{background:rgba(255,255,255,.012);color:var(--text-primary)}
+        .data-table .hl{color:var(--text-primary);font-weight:500}
+
+        /* Heatmap */
+        .hcell{
+            display:inline-flex;align-items:center;padding:4px 10px;border-radius:4px;
+            font-family:'DM Mono',monospace;font-size:10px;font-weight:500;
+        }
+        .hcell-c{background:rgba(239,68,68,.22);color:#fca5a5;border:1px solid rgba(239,68,68,.35)}
+        .hcell-h{background:rgba(245,158,11,.18);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+        .hcell-m{background:rgba(59,130,246,.14);color:#93c5fd;border:1px solid rgba(59,130,246,.25)}
+        .hcell-l{background:rgba(34,197,94,.1);color:#86efac;border:1px solid rgba(34,197,94,.2)}
+
+        /* Progress */
+        .prog{height:4px;border-radius:2px;background:var(--border-subtle);overflow:hidden}
+        .prog-fill{height:100%;border-radius:2px;transition:width .6s ease}
+        .prog-fill.g{background:linear-gradient(90deg,#16a34a,#22c55e)}
+        .prog-fill.a{background:linear-gradient(90deg,#d97706,#f59e0b)}
+        .prog-fill.r{background:linear-gradient(90deg,#dc2626,#ef4444)}
+        .prog-fill.b{background:linear-gradient(90deg,#2563eb,#3b82f6)}
+        .prog-fill.go{background:linear-gradient(90deg,var(--gold-dark),var(--gold))}
+
+        /* Chart wrap */
+        .chart-wrap{position:relative;width:100%;height:260px}
+        .chart-wrap canvas{width:100%!important;height:100%!important}
+
+        /* Gap bar */
+        .gap-bar{display:flex;align-items:center;gap:12px;margin:8px 0}
+        .gap-label{width:130px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);flex-shrink:0;text-align:right}
+        .gap-track{flex:1;background:var(--border-subtle);border-radius:3px;height:20px;display:flex;overflow:hidden}
+        .gap-seg{
+            height:100%;display:flex;align-items:center;justify-content:center;
+            font-family:'DM Mono',monospace;font-size:9px;font-weight:500;color:rgba(255,255,255,.85);
+        }
+
+        /* Filter tabs */
+        .ftabs{
+            display:flex;gap:3px;margin-bottom:16px;padding:3px;
+            background:var(--bg-secondary);border-radius:8px;border:1px solid var(--border-subtle);width:fit-content;
+        }
+        .ftab{
+            font-family:'DM Mono',monospace;font-size:10px;padding:6px 14px;border-radius:6px;
+            cursor:pointer;color:var(--text-muted);transition:all .2s;border:none;background:transparent;letter-spacing:.04em;
+        }
+        .ftab:hover{color:var(--text-secondary)}
+        .ftab.active{background:var(--bg-elevated);color:var(--gold);box-shadow:0 1px 4px rgba(0,0,0,.2)}
+
+        /* Toast */
+        .toast-box{
+            position:fixed;top:16px;right:16px;z-index:99998;display:flex;flex-direction:column;gap:8px;
+        }
+        .toast{
+            background:var(--bg-elevated);border:1px solid var(--border-medium);border-radius:8px;
+            padding:12px 16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text-secondary);
+            box-shadow:0 8px 32px rgba(0,0,0,.5);display:flex;align-items:center;gap:10px;
+            animation:tIn .3s ease,tOut .3s ease 3.7s forwards;max-width:340px;
+        }
+        @keyframes tIn{from{opacity:0;transform:translateX(100px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes tOut{from{opacity:1}to{opacity:0}}
+
+        /* Pulse */
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+        .pulse{animation:pulse 2s ease-in-out infinite}
+
+        /* Alert bar */
+        .alert-bar{
+            border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:10px;
+            margin-bottom:16px;font-family:'DM Mono',monospace;font-size:11px;
+        }
+        .alert-bar.red-alert{background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.12);color:#fca5a5}
+        .alert-bar.amber-alert{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.12);color:#fcd34d}
+
+        /* Heatmap grid */
+        .hmap-grid{display:grid;grid-template-columns:auto repeat(4,1fr);gap:5px;max-width:400px}
+        .hmap-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim);display:flex;align-items:center;justify-content:flex-end;padding-right:8px}
+        .hmap-cell{
+            border-radius:6px;padding:12px 8px;text-align:center;
+            font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;
+            transition:transform .2s;cursor:default;
+        }
+        .hmap-cell:hover{transform:scale(1.06)}
+
+        /* Responsive */
+        @media(max-width:1024px){
+            .grid-4{grid-template-columns:repeat(2,1fr)}
+            .grid-3{grid-template-columns:repeat(2,1fr)}
+            .grid-2{grid-template-columns:1fr}
+        }
+        @media(max-width:768px){
+            .sidebar{width:56px;min-width:56px}
+            .sidebar-logo h1{font-size:15px;letter-spacing:.1em}
+            .sidebar-logo .sub,.nav-item span:not(.nav-icon),.nav-section{display:none}
+            .nav-item{justify-content:center;padding:12px;margin:1px 4px}
+            .nav-item.active::before{display:none}
+            .module-area{padding:16px}
+            .top-bar{padding:10px 14px}
+            .search-box{width:120px}
+            .clock{display:none}
+            .metrics-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <h1>IIOP</h1>
+            <span class="sub">Investment Operations Platform</span>
+        </div>
+        <div class="nav-section">Command</div>
+        <div class="nav-item active" data-mod="executive"><span class="nav-icon">◈</span><span>Executive Center</span></div>
+        <div class="nav-item" data-mod="eos"><span class="nav-icon">◇</span><span>EOS Scorecard</span><span class="nav-badge">2</span></div>
+        <div class="nav-section">Operations</div>
+        <div class="nav-item" data-mod="acquisitions"><span class="nav-icon">△</span><span>Acquisitions Pipeline</span></div>
+        <div class="nav-item" data-mod="assetmgmt"><span class="nav-icon">▣</span><span>Asset Management</span></div>
+        <div class="nav-item" data-mod="investors"><span class="nav-icon">◎</span><span>Investor Reporting</span></div>
+        <div class="nav-section">Risk &amp; Compliance</div>
+        <div class="nav-item" data-mod="lender"><span class="nav-icon">⬡</span><span>Lender Compliance</span><span class="nav-badge">2</span></div>
+        <div class="nav-item" data-mod="accountability"><span class="nav-icon">⊞</span><span>Accountability</span></div>
+        <div class="nav-item" data-mod="audit"><span class="nav-icon">⊡</span><span>Operational Audit</span></div>
+        <div class="nav-item" data-mod="risk"><span class="nav-icon">⬢</span><span>Risk Register</span></div>
+        <div class="nav-section">Strategy</div>
+        <div class="nav-item" data-mod="day90"><span class="nav-icon">▷</span><span>90-Day Assessment</span></div>
+        <div class="sidebar-footer">IIOP v3.1.0 · 2026</div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-content" id="mainContent">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="breadcrumb" id="breadcrumb">
+                <span>IIOP</span><span class="sep">/</span><span class="cur" id="bcCurrent">Executive Center</span>
+            </div>
+            <div class="top-right">
+                <input type="text" class="search-box" id="globalSearch" placeholder="Search assets, deals, tasks…">
+                <div class="notif-btn" id="notifBtn" title="Alerts">🔔<div class="notif-dot pulse"></div></div>
+                <div class="clock" id="clock"></div>
+            </div>
+        </div>
+
+        <div class="module-area">
+            <!-- ==================== EXECUTIVE CENTER ==================== -->
+            <section class="module active" id="mod-executive">
+                <div class="page-title">Executive Command Center</div>
+                <div class="page-sub">Real-time portfolio overview · Last updated: <span id="tsExec"></span></div>
+                <div style="height:20px"></div>
+
+                <div class="alert-bar red-alert" id="execAlert" style="display:none"></div>
+
+                <div class="metrics-grid" id="execMetrics"></div>
+
+                <div class="grid-2" style="margin-bottom:14px">
+                    <div class="card si" style="animation-delay:.35s">
+                        <div class="card-header">Investor Reporting SLA</div>
+                        <div style="display:flex;align-items:center;gap:14px">
+                            <span class="badge badge-green">98% On-Time</span>
+                            <span class="font-mono" style="font-size:11px;color:var(--text-secondary)">Q4 2025: 11/11 delivered</span>
+                        </div>
+                    </div>
+                    <div class="card si" style="animation-delay:.4s">
+                        <div class="card-header">Lender Compliance Score</div>
+                        <div style="display:flex;align-items:center;gap:14px">
+                            <span class="badge badge-green">A Grade</span>
+                            <span class="font-mono" style="font-size:11px;color:var(--text-secondary)">0 covenant violations</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card si" style="animation-delay:.45s">
+                    <div class="card-header">NOI Trend · Trailing 12 Months</div>
+                    <div class="chart-wrap"><canvas id="chartNOI"></canvas></div>
+                </div>
+            </section>
+
+            <!-- ==================== EOS SCORECARD ==================== -->
+            <section class="module" id="mod-eos">
+                <div class="page-title">EOS Scorecard — Weekly KPI Tracker</div>
+                <div class="page-sub">Week 23, 2026 · Next review: Monday Jun 15</div>
+                <div style="height:20px"></div>
+
+                <div class="ftabs" id="eosFilter">
+                    <button class="ftab active" data-filter="all">All KPIs</button>
+                    <button class="ftab" data-filter="red">Critical</button>
+                    <button class="ftab" data-filter="amber">Watch</button>
+                    <button class="ftab" data-filter="green">On Track</button>
+                </div>
+
+                <div class="table-wrap" id="eosTableWrap"></div>
+                <div style="height:16px"></div>
+                <div class="card">
+                    <div class="card-header">Weekly Scorecard Trend (Last 8 Weeks)</div>
+                    <div class="chart-wrap"><canvas id="chartEOS"></canvas></div>
+                </div>
+            </section>
+
+            <!-- ==================== ACQUISITIONS ==================== -->
+            <section class="module" id="mod-acquisitions">
+                <div class="page-title">Acquisitions Pipeline</div>
+                <div class="page-sub" id="acqSub"></div>
+                <div style="height:20px"></div>
+
+                <div class="ftabs" id="acqFilter">
+                    <button class="ftab active" data-filter="all">All Stages</button>
+                    <button class="ftab" data-filter="Lead">Lead</button>
+                    <button class="ftab" data-filter="Screening">Screening</button>
+                    <button class="ftab" data-filter="Underwriting">Underwriting</button>
+                    <button class="ftab" data-filter="IC Review">IC Review</button>
+                    <button class="ftab" data-filter="Due Diligence">DD</button>
+                    <button class="ftab" data-filter="Closing">Closing</button>
+                </div>
+
+                <div class="table-wrap" id="acqTableWrap"></div>
+            </section>
+
+            <!-- ==================== ASSET MANAGEMENT ==================== -->
+            <section class="module" id="mod-assetmgmt">
+                <div class="page-title">Asset Management — Property Performance</div>
+                <div class="page-sub">Budget vs Actual · 15 properties · 3 funds</div>
+                <div style="height:20px"></div>
+
+                <div class="ftabs" id="assetFilter">
+                    <button class="ftab active" data-filter="all">All Properties</button>
+                    <button class="ftab" data-filter="F1">Fund I</button>
+                    <button class="ftab" data-filter="F2">Fund II</button>
+                    <button class="ftab" data-filter="F3">Fund III</button>
+                </div>
+
+                <div class="table-wrap" id="assetTableWrap"></div>
+            </section>
+
+            <!-- ==================== INVESTOR REPORTING ==================== -->
+            <section class="module" id="mod-investors">
+                <div class="page-title">Investor Reporting Center</div>
+                <div class="page-sub">3 funds · 147 LPs · Next distribution: Jun 30</div>
+                <div style="height:20px"></div>
+                <div class="grid-4" id="investorCards"></div>
+            </section>
+
+            <!-- ==================== LENDER COMPLIANCE ==================== -->
+            <section class="module" id="mod-lender">
+                <div class="page-title">Lender Compliance Monitor</div>
+                <div class="page-sub">12 loans · 8 lenders · Active covenant tracking</div>
+                <div style="height:20px"></div>
+
+                <div class="alert-bar red-alert" id="lenderAlert" style="display:none"></div>
+                <div class="alert-bar amber-alert" id="lenderWarn" style="display:none"></div>
+
+                <div class="table-wrap" id="lenderTableWrap"></div>
+            </section>
+
+            <!-- ==================== ACCOUNTABILITY ==================== -->
+            <section class="module" id="mod-accountability">
+                <div class="page-title">Accountability Dashboard — EOS-Inspired</div>
+                <div class="page-sub">50 active tasks · Clear ownership · Escalation tracking</div>
+                <div style="height:20px"></div>
+
+                <div class="ftabs" id="acctFilter">
+                    <button class="ftab active" data-filter="all">All Tasks</button>
+                    <button class="ftab" data-filter="Blocked">Blocked</button>
+                    <button class="ftab" data-filter="At Risk">At Risk</button>
+                    <button class="ftab" data-filter="On Track">On Track</button>
+                    <button class="ftab" data-filter="Complete">Complete</button>
+                </div>
+
+                <div class="table-wrap" id="acctTableWrap"></div>
+            </section>
+
+            <!-- ==================== OPERATIONAL AUDIT ==================== -->
+            <section class="module" id="mod-audit">
+                <div class="page-title">Operational Audit — SOP Maturity Assessment</div>
+                <div class="page-sub">Inspired by ISO 9001 · Internal Quality Management</div>
+                <div style="height:20px"></div>
+
+                <div class="table-wrap" id="auditTableWrap"></div>
+                <div style="height:16px"></div>
+                <div class="card">
+                    <div class="card-header">Aggregate Maturity Score</div>
+                    <div style="display:flex;align-items:baseline;gap:4px">
+                        <span class="font-display" style="font-size:48px;font-weight:700;color:var(--text-primary)" id="auditScore">78</span>
+                        <span class="font-mono" style="font-size:18px;color:var(--text-dim)">/100</span>
+                    </div>
+                    <div class="prog" style="margin-top:10px;height:6px">
+                        <div class="prog-fill b" style="width:78%" id="auditProg"></div>
+                    </div>
+                    <div class="font-mono" style="font-size:10px;color:var(--text-dim);margin-top:8px">Target: 85+ by Q3 2026</div>
+                </div>
+            </section>
+
+            <!-- ==================== RISK REGISTER ==================== -->
+            <section class="module" id="mod-risk">
+                <div class="page-title">Risk Register</div>
+                <div class="page-sub">30 risks identified · Heatmap classification</div>
+                <div style="height:20px"></div>
+
+                <div class="ftabs" id="riskFilter">
+                    <button class="ftab active" data-filter="all">All Risks</button>
+                    <button class="ftab" data-filter="Critical">Critical</button>
+                    <button class="ftab" data-filter="High">High</button>
+                    <button class="ftab" data-filter="Medium">Medium</button>
+                    <button class="ftab" data-filter="Low">Low</button>
+                </div>
+
+                <div class="table-wrap" id="riskTableWrap"></div>
+                <div style="height:16px"></div>
+                <div class="card">
+                    <div class="card-header">Risk Heatmap — Likelihood vs Impact</div>
+                    <div class="hmap-grid" id="riskHeatmap"></div>
+                </div>
+            </section>
+
+            <!-- ==================== 90-DAY ASSESSMENT ==================== -->
+            <section class="module" id="mod-day90">
+                <div class="page-title">90-Day Assessment — Director of Investment Operations</div>
+                <div class="page-sub">Onboarding plan · Gap analysis · Priority matrix</div>
+                <div style="height:20px"></div>
+
+                <div class="grid-2" style="margin-bottom:14px">
+                    <div class="card">
+                        <div class="card-header">Current State</div>
+                        <ul style="font-size:12px;color:var(--text-secondary);list-style:none;padding:0;line-height:2.2">
+                            <li>▪ SOP documentation: <span class="badge badge-red">62% coverage</span></li>
+                            <li>▪ KPI tracking: <span class="badge badge-red">Manual, inconsistent</span></li>
+                            <li>▪ Accountability: <span class="badge badge-amber">Unclear on 40% of tasks</span></li>
+                            <li>▪ Investor reporting: <span class="badge badge-amber">85% on-time SLA</span></li>
+                            <li>▪ Compliance: <span class="badge badge-amber">2 near-breaches in 2025</span></li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">Target State (Day 90)</div>
+                        <ul style="font-size:12px;color:var(--text-secondary);list-style:none;padding:0;line-height:2.2">
+                            <li>▪ SOP documentation: <span class="badge badge-green">90%+ coverage</span></li>
+                            <li>▪ KPI tracking: <span class="badge badge-green">Automated EOS scorecard</span></li>
+                            <li>▪ Accountability: <span class="badge badge-green">100% task ownership clarity</span></li>
+                            <li>▪ Investor reporting: <span class="badge badge-green">98%+ on-time SLA</span></li>
+                            <li>▪ Compliance: <span class="badge badge-green">Zero covenant breaches</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:14px">
+                    <div class="card-header">Gap Analysis &amp; Improvement Plan</div>
+                    <div style="margin-top:14px">
+                        <div class="gap-bar">
+                            <span class="gap-label">SOP Coverage</span>
+                            <div class="gap-track">
+                                <div class="gap-seg" style="width:62%;background:#ef4444">62%</div>
+                                <div class="gap-seg" style="width:28%;background:#3b82f6;border-radius:0 3px 3px 0">+28%</div>
+                            </div>
+                        </div>
+                        <div class="gap-bar">
+                            <span class="gap-label">KPI Automation</span>
+                            <div class="gap-track">
+                                <div class="gap-seg" style="width:35%;background:#ef4444">35%</div>
+                                <div class="gap-seg" style="width:55%;background:#3b82f6;border-radius:0 3px 3px 0">+55%</div>
+                            </div>
+                        </div>
+                        <div class="gap-bar">
+                            <span class="gap-label">Accountability</span>
+                            <div class="gap-track">
+                                <div class="gap-seg" style="width:60%;background:#f59e0b">60%</div>
+                                <div class="gap-seg" style="width:40%;background:#3b82f6;border-radius:0 3px 3px 0">+40%</div>
+                            </div>
+                        </div>
+                        <div class="gap-bar">
+                            <span class="gap-label">Reporting SLA</span>
+                            <div class="gap-track">
+                                <div class="gap-seg" style="width:85%;background:#f59e0b">85%</div>
+                                <div class="gap-seg" style="width:13%;background:#3b82f6;border-radius:0 3px 3px 0">+13%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Priority Matrix — First 90 Days</div>
+                    <div class="table-wrap" style="margin-top:10px">
+                        <table class="data-table">
+                            <thead><tr><th>Priority</th><th>Initiative</th><th>Days</th><th>Impact</th><th>Dependencies</th></tr></thead>
+                            <tbody>
+                                <tr><td><span class="badge badge-red">P0</span></td><td class="hl">Implement EOS Scorecard System</td><td class="font-mono" style="font-size:10px">1–30</td><td><span class="badge badge-red">Critical</span></td><td>Data integration</td></tr>
+                                <tr><td><span class="badge badge-red">P0</span></td><td class="hl">SOP Gap Assessment &amp; Remediation</td><td class="font-mono" style="font-size:10px">1–45</td><td><span class="badge badge-red">Critical</span></td><td>Team interviews</td></tr>
+                                <tr><td><span class="badge badge-amber">P1</span></td><td class="hl">Accountability Matrix Rollout</td><td class="font-mono" style="font-size:10px">15–60</td><td><span class="badge badge-amber">High</span></td><td>SOP completion</td></tr>
+                                <tr><td><span class="badge badge-amber">P1</span></td><td class="hl">Investor Reporting Automation</td><td class="font-mono" style="font-size:10px">30–75</td><td><span class="badge badge-amber">High</span></td><td>Tech stack upgrade</td></tr>
+                                <tr><td><span class="badge badge-blue">P2</span></td><td class="hl">Lender Covenant Early Warning System</td><td class="font-mono" style="font-size:10px">45–90</td><td><span class="badge badge-blue">Medium</span></td><td>Data pipeline</td></tr>
+                                <tr><td><span class="badge badge-blue">P2</span></td><td class="hl">Operational Audit Framework</td><td class="font-mono" style="font-size:10px">60–90</td><td><span class="badge badge-blue">Medium</span></td><td>ISO 9001 alignment</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<div class="toast-box" id="toastBox"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════
+const funds=[
+    {id:'F1',name:'Multifamily Value Fund I',vintage:2018,aum:320,properties:6,lps:52},
+    {id:'F2',name:'Multifamily Growth Fund II',vintage:2021,aum:480,properties:5,lps:61},
+    {id:'F3',name:'Multifamily Opportunity Fund III',vintage:2024,aum:210,properties:4,lps:34}
+];
+const properties=[
+    {id:'P01',name:'The Vue at Brookhaven',fund:'F1',units:342,occ:95.2,nb:3.8,na:3.92,del:1.8,lr:72,cp:68,city:'Atlanta, GA'},
+    {id:'P02',name:'Oakwood Gardens',fund:'F1',units:288,occ:93.7,nb:2.9,na:2.78,del:2.4,lr:65,cp:45,city:'Charlotte, NC'},
+    {id:'P03',name:'Cypress Creek',fund:'F1',units:410,occ:96.1,nb:5.2,na:5.35,del:1.1,lr:78,cp:82,city:'Raleigh, NC'},
+    {id:'P04',name:'The Meridian',fund:'F1',units:256,occ:91.5,nb:2.6,na:2.38,del:3.2,lr:58,cp:30,city:'Nashville, TN'},
+    {id:'P05',name:'Palmetto Place',fund:'F1',units:320,occ:94.3,nb:3.4,na:3.48,del:1.9,lr:70,cp:55,city:'Greenville, SC'},
+    {id:'P06',name:'Bridgewater Lofts',fund:'F1',units:198,occ:97.2,nb:2.2,na:2.31,del:0.8,lr:81,cp:90,city:'Charleston, SC'},
+    {id:'P07',name:'Stonefield Commons',fund:'F2',units:450,occ:95.8,nb:6.1,na:6.25,del:1.5,lr:74,cp:62,city:'Austin, TX'},
+    {id:'P08',name:'The Arden',fund:'F2',units:375,occ:93.1,nb:4.8,na:4.55,del:2.7,lr:60,cp:38,city:'Dallas, TX'},
+    {id:'P09',name:'Willow Creek',fund:'F2',units:290,occ:96.5,nb:3.5,na:3.62,del:1.0,lr:76,cp:71,city:'Phoenix, AZ'},
+    {id:'P10',name:'The Ellington',fund:'F2',units:340,occ:94.0,nb:4.2,na:4.10,del:2.0,lr:67,cp:50,city:'Denver, CO'},
+    {id:'P11',name:'Magnolia Park',fund:'F2',units:280,occ:92.8,nb:3.1,na:2.95,del:3.0,lr:55,cp:28,city:'Orlando, FL'},
+    {id:'P12',name:'The Winslow',fund:'F3',units:360,occ:97.8,nb:5.5,na:5.70,del:0.6,lr:83,cp:95,city:'Tampa, FL'},
+    {id:'P13',name:'Harborview Terrace',fund:'F3',units:310,occ:95.5,nb:4.0,na:4.12,del:1.4,lr:71,cp:58,city:'Jacksonville, FL'},
+    {id:'P14',name:'The Ashford',fund:'F3',units:275,occ:90.2,nb:3.3,na:2.88,del:4.1,lr:48,cp:22,city:'San Antonio, TX'},
+    {id:'P15',name:'Crescent Heights',fund:'F3',units:378,occ:96.3,nb:4.9,na:5.05,del:1.2,lr:79,cp:74,city:'Salt Lake City, UT'}
+];
+const acquisitions=[
+    {id:'A01',deal:'Bristol Park Apartments',stage:'Due Diligence',units:220,value:48,owner:'Sarah Chen',due:'2026-07-15',risk:'Medium',blocker:'—'},
+    {id:'A02',deal:'The Hawthorne',stage:'Underwriting',units:310,value:72,owner:'Marcus Webb',due:'2026-08-01',risk:'Low',blocker:'—'},
+    {id:'A03',deal:'Legacy at River Oaks',stage:'IC Review',units:185,value:38,owner:'Priya Kapoor',due:'2026-06-28',risk:'High',blocker:'Environmental phase II pending'},
+    {id:'A04',deal:'Summit Ridge',stage:'Screening',units:400,value:95,owner:'David Okonkwo',due:'2026-09-10',risk:'Medium',blocker:'—'},
+    {id:'A05',deal:'The Carrington',stage:'Closing',units:260,value:55,owner:'Sarah Chen',due:'2026-06-20',risk:'Low',blocker:'—'},
+    {id:'A06',deal:'Parkview Gardens',stage:'Lead',units:340,value:78,owner:'Marcus Webb',due:'2026-10-01',risk:'High',blocker:'Off-market; relationship dependent'},
+    {id:'A07',deal:'The Alden',stage:'Due Diligence',units:195,value:42,owner:'Priya Kapoor',due:'2026-07-30',risk:'Medium',blocker:'Title review in progress'},
+    {id:'A08',deal:'Copperfield Court',stage:'Underwriting',units:280,value:62,owner:'David Okonkwo',due:'2026-08-15',risk:'Low',blocker:'—'},
+    {id:'A09',deal:'The Benton',stage:'IC Review',units:230,value:50,owner:'Sarah Chen',due:'2026-07-05',risk:'Medium',blocker:'Appraisal gap concern'},
+    {id:'A10',deal:'Maplewood Estates',stage:'Screening',units:350,value:82,owner:'Marcus Webb',due:'2026-09-20',risk:'Low',blocker:'—'},
+    {id:'A11',deal:'The Sterling',stage:'Closing',units:300,value:68,owner:'Priya Kapoor',due:'2026-06-25',risk:'Low',blocker:'—'},
+    {id:'A12',deal:'Fairfax Commons',stage:'Lead',units:270,value:58,owner:'David Okonkwo',due:'2026-10-15',risk:'High',blocker:'Seller financing complexity'},
+    {id:'A13',deal:'The Prescott',stage:'Due Diligence',units:240,value:52,owner:'Sarah Chen',due:'2026-07-22',risk:'Medium',blocker:'—'},
+    {id:'A14',deal:'Timber Ridge',stage:'Underwriting',units:190,value:40,owner:'Marcus Webb',due:'2026-08-08',risk:'Low',blocker:'—'},
+    {id:'A15',deal:'The Landmark',stage:'Asset Mgmt Handoff',units:320,value:74,owner:'Priya Kapoor',due:'2026-06-18',risk:'Low',blocker:'—'},
+    {id:'A16',deal:'Somerset Farms',stage:'Screening',units:410,value:96,owner:'David Okonkwo',due:'2026-09-28',risk:'Medium',blocker:'—'},
+    {id:'A17',deal:'The Delaney',stage:'IC Review',units:175,value:36,owner:'Sarah Chen',due:'2026-07-10',risk:'High',blocker:'Cap rate compression risk'},
+    {id:'A18',deal:'Brookside Village',stage:'Lead',units:450,value:105,owner:'Marcus Webb',due:'2026-10-30',risk:'Medium',blocker:'—'},
+    {id:'A19',deal:'The Whitmore',stage:'Due Diligence',units:210,value:46,owner:'Priya Kapoor',due:'2026-07-18',risk:'Low',blocker:'—'},
+    {id:'A20',deal:'Rolling Hills',stage:'Closing',units:290,value:64,owner:'David Okonkwo',due:'2026-06-22',risk:'Low',blocker:'—'}
+];
+const eosKpis=[
+    {kpi:'Portfolio Occupancy',target:'≥93%',actual:'94.8%',status:'green',trend:'↑ 0.3%',owner:'VP Asset Mgmt'},
+    {kpi:'Collections Rate',target:'≥97%',actual:'97.9%',status:'green',trend:'↑ 0.1%',owner:'Revenue Director'},
+    {kpi:'NOI Growth YoY',target:'≥5%',actual:'6.2%',status:'green',trend:'↑ 1.1%',owner:'CFO'},
+    {kpi:'Delinquency 30+',target:'≤2%',actual:'2.1%',status:'amber',trend:'↓ 0.2%',owner:'Collections Mgr'},
+    {kpi:'CapEx vs Budget',target:'≤5%',actual:'+3.8%',status:'green',trend:'— flat',owner:'CapEx Director'},
+    {kpi:'Investor Reporting SLA',target:'≥95%',actual:'98%',status:'green',trend:'↑ 2%',owner:'IR Manager'},
+    {kpi:'Lender Compliance',target:'100%',actual:'100%',status:'green',trend:'0 violations',owner:'GC'},
+    {kpi:'Lease Renewal Rate',target:'≥65%',actual:'68.5%',status:'green',trend:'↑ 3.5%',owner:'Leasing Director'},
+    {kpi:'SOP Maturity Score',target:'≥80',actual:'62',status:'red',trend:'↑ 3 pts',owner:'COO'},
+    {kpi:'Audit Finding Closure',target:'≥90%',actual:'76%',status:'amber',trend:'↑ 8%',owner:'QA Manager'}
+];
+const owners=['Sarah Chen','Marcus Webb','Priya Kapoor','David Okonkwo','Lisa Tran','James Rodriguez','Emily Hart','Robert Kim'];
+const priorities=['P0-Critical','P1-High','P2-Medium','P3-Low'];
+const statuses=['On Track','At Risk','Blocked','Complete'];
+const escLevels=['None','Manager','Director','VP','C-Suite'];
+const taskNames=[
+    'Q2 Investor Report Review','SOP Update — Acquisitions','Covenant Compliance Check','CapEx Budget Reconciliation',
+    'Lease Audit — Property P03','K-1 Final Review','Fund III Capital Call Prep','Property Valuation Update',
+    'Risk Register Refresh','Board Deck Preparation','Due Diligence Checklist Update','Asset Mgmt QBR',
+    'Lender Reporting Package','NOI Variance Analysis','Compliance Training Session','IC Memo Draft',
+    'Portfolio Stress Test','Distributions Calculation','SOP Training Rollout','Audit Response Coordination',
+    'Market Rent Survey','Insurance Renewal Review','Tax Assessment Appeal','Property Inspection Follow-up',
+    'Investor Query Response','Data Room Maintenance','Variance Report Generation','Budget vs Actual Review',
+    'Cash Flow Forecasting','Quarterly Valuation Update','Operating Agreement Review','Service Provider RFP',
+    'Energy Efficiency Audit','Tenant Satisfaction Survey','Emergency Reserve Analysis','Loan Covenant Certificate',
+    'Waterfall Calculation','GP Catch-up Verification','Fund Performance Attribution','Operational KPI Dashboard',
+    'Benchmarking Report','Succession Planning Doc','Vendor Contract Review','Cybersecurity Assessment',
+    'Disaster Recovery Test','Internal Control Testing','Fraud Risk Assessment','ESG Reporting Prep',
+    'Annual Strategy Offsite','Team Performance Reviews'
+];
+// Deterministic seeded random for consistency
+let _seed=42;
+function srand(){_seed=((_seed*16807)%2147483647);return(_seed-1)/2147483646;}
+function pick(arr){return arr[Math.floor(srand()*arr.length)];}
+
+const acctTasks=[];
+for(let i=0;i<50;i++){
+    const p=pick(priorities),s=pick(statuses);
+    const esc=s==='Blocked'?escLevels[2+Math.floor(srand()*3)]:(s==='At Risk'?escLevels[1+Math.floor(srand()*2)]:'None');
+    acctTasks.push({
+        id:'T'+String(i+1).padStart(2,'0'),task:taskNames[i],owner:pick(owners),
+        due:new Date(2026,5+Math.floor(srand()*6),1+Math.floor(srand()*28)).toISOString().split('T')[0],
+        priority:p,status:s,escalation:esc
+    });
+}
+
+const riskCats=['Financial','Operational','Compliance','Construction','Property Management'];
+const riskDescs=[
+    'Interest rate hike impacting refi','Key property manager departure','Fair housing compliance gap',
+    'Construction delay — materials','Tenant lawsuit exposure','Cap rate expansion',
+    'Cybersecurity breach potential','Vendor fraud risk','Environmental contamination',
+    'Zoning change proposal','Major hurricane exposure','Labor shortage for renovations',
+    'Rent control legislation','Lender covenant breach risk','Insurance cost surge',
+    'Supply chain disruption','Data integrity failure','Fraudulent financial reporting',
+    'Property tax reassessment','Lease expiration concentration','Utility cost escalation',
+    'Pandemic-related occupancy drop','Structural defect discovery','Payment processing failure',
+    'Third-party provider failure','Regulatory non-compliance','Loan maturity wall',
+    'Market rent decline','Capital call shortfall','Reputation damage event'
+];
+const mitigations=['Insurance','Hedging','Process improvement','Training','Reserves','Diversification','Audit','Legal review','Vendor backup','Monitoring'];
+const risks=[];
+for(let i=0;i<30;i++){
+    const lh=pick(['Low','Medium','High','Critical']),imp=pick(['Low','Medium','High','Critical']);
+    const sv={Low:1,Medium:2,High:3,Critical:4};
+    const sc=sv[lh]*sv[imp];
+    const sev=sc>=12?'Critical':sc>=6?'High':sc>=3?'Medium':'Low';
+    risks.push({
+        id:'R'+String(i+1).padStart(2,'0'),risk:riskDescs[i],category:pick(riskCats),
+        likelihood:lh,impact:imp,severity:sev,mitigation:pick(mitigations),owner:pick(owners)
+    });
+}
+
+const loans=[
+    {id:'L01',prop:'The Vue at Brookhaven',lender:'Wells Fargo',dc:1.25,da:1.78,oc:90,oa:95.2,nr:'2026-07-01',alert:'none'},
+    {id:'L02',prop:'Oakwood Gardens',lender:'KeyBank',dc:1.30,da:1.35,oc:90,oa:93.7,nr:'2026-07-01',alert:'amber'},
+    {id:'L03',prop:'Cypress Creek',lender:'Berkadia',dc:1.20,da:2.10,oc:88,oa:96.1,nr:'2026-07-01',alert:'none'},
+    {id:'L04',prop:'The Meridian',lender:'Walker & Dunlop',dc:1.35,da:1.22,oc:90,oa:91.5,nr:'2026-07-01',alert:'red'},
+    {id:'L05',prop:'Palmetto Place',lender:'JLL',dc:1.25,da:1.65,oc:90,oa:94.3,nr:'2026-07-01',alert:'none'},
+    {id:'L06',prop:'Bridgewater Lofts',lender:'Fannie Mae',dc:1.20,da:2.05,oc:88,oa:97.2,nr:'2026-07-01',alert:'none'},
+    {id:'L07',prop:'Stonefield Commons',lender:'Freddie Mac',dc:1.25,da:1.88,oc:90,oa:95.8,nr:'2026-07-01',alert:'none'},
+    {id:'L08',prop:'The Arden',lender:'Wells Fargo',dc:1.30,da:1.40,oc:90,oa:93.1,nr:'2026-07-01',alert:'amber'},
+    {id:'L09',prop:'Willow Creek',lender:'KeyBank',dc:1.20,da:1.92,oc:88,oa:96.5,nr:'2026-07-01',alert:'none'},
+    {id:'L10',prop:'The Ellington',lender:'Berkadia',dc:1.25,da:1.55,oc:90,oa:94.0,nr:'2026-07-01',alert:'none'},
+    {id:'L11',prop:'Magnolia Park',lender:'Walker & Dunlop',dc:1.35,da:1.18,oc:90,oa:92.8,nr:'2026-07-01',alert:'red'},
+    {id:'L12',prop:'The Winslow',lender:'Fannie Mae',dc:1.20,da:2.30,oc:88,oa:97.8,nr:'2026-07-01',alert:'none'}
+];
+const auditAreas=[
+    {area:'Acquisitions Process',sop:70,doc:65,rev:60,appr:75,qa:55},
+    {area:'Asset Management',sop:80,doc:78,rev:72,appr:82,qa:68},
+    {area:'Investor Reporting',sop:85,doc:90,rev:80,appr:88,qa:82},
+    {area:'Fund Operations',sop:55,doc:48,rev:42,appr:60,qa:40},
+    {area:'Compliance Tracking',sop:65,doc:62,rev:58,appr:70,qa:55},
+    {area:'CapEx Management',sop:72,doc:68,rev:65,appr:74,qa:60},
+    {area:'Property Accounting',sop:88,doc:85,rev:82,appr:90,qa:78},
+    {area:'Risk Management',sop:50,doc:45,rev:38,appr:52,qa:35}
+];
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+const $=s=>document.querySelector(s);
+const $$=s=>document.querySelectorAll(s);
+const sem=s=>`<span class="sem ${s}"></span>`;
+const badge=(t,cls=`badge-${t}`)=>`<span class="badge ${cls}">${t}</span>`;
+const riskBadge=s=>{
+    const m={Critical:'hcell-c',High:'hcell-h',Medium:'hcell-m',Low:'hcell-l'};
+    return`<span class="hcell ${m[s]||'hcell-l'}">${s}</span>`;
+};
+const alertBadge=a=>{
+    if(a==='red')return'<span class="badge badge-red">⚠ Breach Risk</span>';
+    if(a==='amber')return'<span class="badge badge-amber">◉ Monitor</span>';
+    return'<span class="badge badge-green">✓ Compliant</span>';
+};
+const priBadge=p=>{
+    const m={'P0-Critical':'badge-red','P1-High':'badge-amber','P2-Medium':'badge-blue','P3-Low':'badge-green'};
+    return`<span class="badge ${m[p]||'badge-blue'}">${p}</span>`;
+};
+const statBadge=s=>{
+    const m={'On Track':'badge-green','At Risk':'badge-amber','Blocked':'badge-red','Complete':'badge-blue'};
+    return`<span class="badge ${m[s]||'badge-blue'}">${s}</span>`;
+};
+
+function toast(msg,icon='◈'){
+    const box=$('#toastBox');
+    const t=document.createElement('div');
+    t.className='toast';
+    t.innerHTML=`<span style="color:var(--gold)">${icon}</span> ${msg}`;
+    box.appendChild(t);
+    setTimeout(()=>t.remove(),4200);
+}
+
+// Clock
+function tickClock(){
+    const now=new Date();
+    const str=now.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    if($('#clock'))$('#clock').textContent=str;
+}
+setInterval(tickClock,1000);tickClock();
+
+// Timestamp helper
+function ts(){
+    return new Date().toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+const modNames={
+    executive:'Executive Center',eos:'EOS Scorecard',acquisitions:'Acquisitions Pipeline',
+    assetmgmt:'Asset Management',investors:'Investor Reporting',lender:'Lender Compliance',
+    accountability:'Accountability',audit:'Operational Audit',risk:'Risk Register',day90:'90-Day Assessment'
+};
+
+function nav(mod){
+    $$('.module').forEach(m=>m.classList.remove('active'));
+    $$('.nav-item').forEach(n=>n.classList.remove('active'));
+    const el=$('#mod-'+mod);
+    if(el)el.classList.add('active');
+    const ni=$$(`[data-mod="${mod}"]`);
+    ni.forEach(n=>n.classList.add('active'));
+    if($('#bcCurrent'))$('#bcCurrent').textContent=modNames[mod]||mod;
+    // Lazy render charts
+    if(mod==='executive'){renderNOIChart();}
+    if(mod==='eos'){renderEOSChart();}
+    // Reset scroll
+    if($('#mainContent'))$('#mainContent').scrollTop=0;
+}
+
+$$('.nav-item').forEach(item=>{
+    item.addEventListener('click',()=>{
+        const m=item.getAttribute('data-mod');
+        if(m)nav(m);
+    });
+});
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: EXECUTIVE
+// ═══════════════════════════════════════════════════════════════
+function renderExecutive(){
+    if($('#tsExec'))$('#tsExec').textContent=ts();
+    const totalUnits=properties.reduce((s,p)=>s+p.units,0);
+    const avgOcc=(properties.reduce((s,p)=>s+p.occ,0)/properties.length).toFixed(1);
+    const totalNOI=properties.reduce((s,p)=>s+p.na,0).toFixed(1);
+    const metrics=[
+        {h:'Portfolio Units',v:totalUnits.toLocaleString(),sub:'Across 15 properties',cls:''},
+        {h:'Occupancy',v:avgOcc+'%',sub:parseFloat(avgOcc)>=93?'Above 93% target':'Below target',s:parseFloat(avgOcc)>=93?'g':'a'},
+        {h:'Annualized NOI','$':true,v:totalNOI+'M',sub:'+6.2% YoY',cls:''},
+        {h:'Cash Position','$':true,v:'18.7M',sub:'Reserves: 9.4 months',cls:''},
+        {h:'Portfolio DSCR',v:'1.82x',sub:'Covenant: 1.25x min',s:'g'},
+        {h:'Delinquency',v:'2.1%',sub:'30+ day: 1.3%',s:'a'}
+    ];
+    let html='';
+    metrics.forEach((m,i)=>{
+        const prefix=m['$']?'$':'';
+        html+=`<div class="card si" style="animation-delay:${i*0.06}s">
+            <div class="card-header">${m.h}</div>
+            <div class="card-value">${prefix}${m.v}</div>
+            <div class="card-sub">${m.s?sem(m.s):''}${m.sub}</div>
+        </div>`;
+    });
+    $('#execMetrics').innerHTML=html;
+
+    // Check for alerts
+    const delinqAlerts=loans.filter(l=>l.alert==='red');
+    if(delinqAlerts.length){
+        const el=$('#execAlert');
+        el.style.display='flex';
+        el.className='alert-bar red-alert';
+        el.innerHTML=`<span style="font-size:14px">⚠</span> ${delinqAlerts.length} loan(s) at covenant breach risk: ${delinqAlerts.map(l=>l.prop).join(', ')}`;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: EOS
+// ═══════════════════════════════════════════════════════════════
+function renderEOS(filter='all'){
+    const filtered=filter==='all'?eosKpis:eosKpis.filter(k=>k.status===filter);
+    let html=`<table class="data-table"><thead><tr><th>KPI</th><th>Target</th><th>Actual</th><th>Status</th><th>Trend</th><th>Owner</th></tr></thead><tbody>`;
+    filtered.forEach(k=>{
+        const sc=k.status==='green'?'g':k.status==='amber'?'a':'r';
+        const scLabel=k.status.charAt(0).toUpperCase()+k.status.slice(1);
+        html+=`<tr><td class="hl">${k.kpi}</td><td>${k.target}</td><td>${k.actual}</td>
+            <td>${sem(sc)} ${scLabel}</td><td>${k.trend}</td><td>${k.owner}</td></tr>`;
+    });
+    html+='</tbody></table>';
+    $('#eosTableWrap').innerHTML=html;
+}
+
+// EOS filter tabs
+$('#eosFilter')?.addEventListener('click',e=>{
+    if(e.target.classList.contains('ftab')){
+        $$('#eosFilter .ftab').forEach(t=>t.classList.remove('active'));
+        e.target.classList.add('active');
+        renderEOS(e.target.dataset.filter);
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: ACQUISITIONS
+// ═══════════════════════════════════════════════════════════════
+function renderAcq(filter='all'){
+    const data=filter==='all'?acquisitions:acquisitions.filter(a=>a.stage===filter);
+    if($('#acqSub')){
+        const totalVal=data.reduce((s,a)=>s+a.value,0);
+        $('#acqSub').textContent=`${data.length} deals · 3 funds · Pipeline value: $${totalVal}M`;
+    }
+    const stageColors={Lead:'#5a6b85',Screening:'#3b82f6',Underwriting:'#7c3aed','IC Review':'#f59e0b','Due Diligence':'#3b82f6',Closing:'#22c55e','Asset Mgmt Handoff':'#14b8a6'};
+    let html=`<table class="data-table"><thead><tr><th>Deal</th><th>Stage</th><th>Units</th><th>Est. Value</th><th>Owner</th><th>Due Date</th><th>Risk</th><th>Blocker</th></tr></thead><tbody>`;
+    data.forEach(a=>{
+        const rb=a.risk==='High'?'<span class="badge badge-red">High</span>':a.risk==='Medium'?'<span class="badge badge-amber">Med</span>':'<span class="badge badge-green">Low</span>';
+        html+=`<tr><td class="hl">${a.deal}</td>
+            <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${stageColors[a.stage]||'#5a6b85'};margin-right:8px"></span>${a.stage}</td>
+            <td>${a.units}</td><td>$${a.value}M</td><td>${a.owner}</td><td>${a.due}</td>
+            <td>${rb}</td><td style="font-size:10px">${a.blocker}</td></tr>`;
+    });
+    html+='</tbody></table>';
+    $('#acqTableWrap').innerHTML=html;
+}
+
+$('#acqFilter')?.addEventListener('click',e=>{
+    if(e.target.classList.contains('ftab')){
+        $$('#acqFilter .ftab').forEach(t=>t.classList.remove('active'));
+        e.target.classList.add('active');
+        renderAcq(e.target.dataset.filter);
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: ASSET MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+function renderAsset(filter='all'){
+    const data=filter==='all'?properties:properties.filter(p=>p.fund===filter);
+    let html=`<table class="data-table"><thead><tr><th>Property</th><th>NOI Budget</th><th>NOI Actual</th><th>Variance</th><th>Occupancy</th><th>Delinquency</th><th>Renewals</th><th>CapEx</th></tr></thead><tbody>`;
+    data.forEach(p=>{
+        const v=((p.na-p.nb)/p.nb*100).toFixed(1);
+        const vc=v>=0?'color:var(--green)':'color:var(--red)';
+        const os=p.occ>=93?'g':p.occ>=90?'a':'r';
+        const ds=p.del<=2?'g':p.del<=3.5?'a':'r';
+        const cs=p.cp>=70?'g':p.cp>=40?'a':'r';
+        html+=`<tr>
+            <td class="hl">${p.name} <span style="font-size:9px;color:var(--text-dim)">${p.city}</span></td>
+            <td>$${p.nb.toFixed(1)}M</td><td>$${p.na.toFixed(2)}M</td>
+            <td style="${vc};font-weight:600">${v>=0?'+':''}${v}%</td>
+            <td>${sem(os)}${p.occ}%</td>
+            <td>${sem(ds)}${p.del}%</td>
+            <td>${p.lr}%</td>
+            <td><div class="prog" style="width:80px;display:inline-block;vertical-align:middle"><div class="prog-fill ${cs}" style="width:${p.cp}%"></div></div> <span style="font-size:10px;margin-left:4px">${p.cp}%</span></td>
+        </tr>`;
+    });
+    html+='</tbody></table>';
+    $('#assetTableWrap').innerHTML=html;
+}
+
+$('#assetFilter')?.addEventListener('click',e=>{
+    if(e.target.classList.contains('ftab')){
+        $$('#assetFilter .ftab').forEach(t=>t.classList.remove('active'));
+        e.target.classList.add('active');
+        renderAsset(e.target.dataset.filter);
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: INVESTOR REPORTING
+// ═══════════════════════════════════════════════════════════════
+function renderInvestors(){
+    const cards=[
+        {h:'Quarterly Reports',body:`Q1 2026: <span class="badge badge-green">Delivered</span><br>Q2 2026: <span class="badge badge-blue">In Progress</span> · Due Jul 15<br>Q4 2025: <span class="badge badge-green">Delivered</span>`},
+        {h:'Capital Calls',body:`Fund III · Call #2: <span class="badge badge-amber">Issued Jun 1</span><br>Amount: $24.5M · 92% funded<br>Remaining: $1.96M due Jun 20`},
+        {h:'Distributions',body:`Fund I · Q2: <span class="badge badge-green">$4.2M Paid</span><br>Fund II · Q2: <span class="badge badge-blue">$6.8M Scheduled</span><br>Next: Jun 30, 2026`},
+        {h:'K-1 Status',body:`2025 Tax Year: <span class="badge badge-green">100% Issued</span><br>147/147 delivered by Mar 12<br>0 extensions filed`}
+    ];
+    let html='';
+    cards.forEach((c,i)=>{
+        html+=`<div class="card si" style="animation-delay:${i*0.08}s"><div class="card-header">${c.h}</div><div class="font-mono" style="font-size:11px;color:var(--text-secondary);line-height:1.9">${c.body}</div></div>`;
+    });
+    $('#investorCards').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: LENDER COMPLIANCE
+// ═══════════════════════════════════════════════════════════════
+function renderLender(){
+    const redLoans=loans.filter(l=>l.alert==='red');
+    const amberLoans=loans.filter(l=>l.alert==='amber');
+    if(redLoans.length){
+        const el=$('#lenderAlert');el.style.display='flex';
+        el.innerHTML=`<span style="font-size:14px">⚠</span> ${redLoans.length} loan(s) at BREACH RISK — DSCR below covenant: ${redLoans.map(l=>l.prop).join(', ')}`;
+    }
+    if(amberLoans.length){
+        const el=$('#lenderWarn');el.style.display='flex';
+        el.innerHTML=`<span style="font-size:14px">◉</span> ${amberLoans.length} loan(s) on WATCH — approaching covenant threshold: ${amberLoans.map(l=>l.prop).join(', ')}`;
+    }
+    let html=`<table class="data-table"><thead><tr><th>Property</th><th>Lender</th><th>DSCR Covenant</th><th>DSCR Actual</th><th>Occ. Covenant</th><th>Occ. Actual</th><th>Next Report</th><th>Status</th></tr></thead><tbody>`;
+    loans.forEach(l=>{
+        const dcColor=l.da<l.dc?'var(--red)':l.da<l.dc*1.15?'var(--amber)':'var(--green)';
+        html+=`<tr><td class="hl">${l.prop}</td><td>${l.lender}</td>
+            <td>${l.dc.toFixed(2)}x</td>
+            <td style="font-weight:600;color:${dcColor}">${l.da.toFixed(2)}x</td>
+            <td>${l.oc}%</td>
+            <td style="font-weight:600;color:${l.oa<l.oc?'var(--red)':'var(--green)'}">${l.oa}%</td>
+            <td>${l.nr}</td><td>${alertBadge(l.alert)}</td></tr>`;
+    });
+    html+='</tbody></table>';
+    $('#lenderTableWrap').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: ACCOUNTABILITY
+// ═══════════════════════════════════════════════════════════════
+function renderAcct(filter='all'){
+    const data=filter==='all'?acctTasks:acctTasks.filter(t=>t.status===filter);
+    let html=`<table class="data-table"><thead><tr><th>Task</th><th>Owner</th><th>Due Date</th><th>Priority</th><th>Status</th><th>Escalation</th></tr></thead><tbody>`;
+    data.slice(0,30).forEach(t=>{
+        html+=`<tr><td class="hl">${t.task}</td><td>${t.owner}</td><td>${t.due}</td>
+            <td>${priBadge(t.priority)}</td><td>${statBadge(t.status)}</td><td>${t.escalation}</td></tr>`;
+    });
+    html+='</tbody></table>';
+    $('#acctTableWrap').innerHTML=html;
+}
+
+$('#acctFilter')?.addEventListener('click',e=>{
+    if(e.target.classList.contains('ftab')){
+        $$('#acctFilter .ftab').forEach(t=>t.classList.remove('active'));
+        e.target.classList.add('active');
+        renderAcct(e.target.dataset.filter);
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: AUDIT
+// ═══════════════════════════════════════════════════════════════
+function renderAudit(){
+    let html=`<table class="data-table"><thead><tr><th>Process Area</th><th>SOP Maturity</th><th>Documentation</th><th>Review Process</th><th>Approval</th><th>QA Controls</th><th>Score</th></tr></thead><tbody>`;
+    auditAreas.forEach(a=>{
+        const avg=Math.round((a.sop+a.doc+a.rev+a.appr+a.qa)/5);
+        const cls=avg>=80?'green':avg>=60?'amber':'red';
+        const bcls=avg>=80?'badge-green':avg>=60?'badge-amber':'badge-red';
+        html+=`<tr><td class="hl">${a.area}</td>
+            <td><div class="prog" style="width:50px;display:inline-block;vertical-align:middle"><div class="prog-fill ${a.sop>=80?'g':a.sop>=60?'a':'r'}" style="width:${a.sop}%"></div></div> <span style="font-size:10px">${a.sop}%</span></td>
+            <td>${a.doc}%</td><td>${a.rev}%</td><td>${a.appr}%</td><td>${a.qa}%</td>
+            <td><span class="badge ${bcls}">${avg}/100</span></td></tr>`;
+    });
+    html+='</tbody></table>';
+    $('#auditTableWrap').innerHTML=html;
+    // Update aggregate
+    const total=Math.round(auditAreas.reduce((s,a)=>s+(a.sop+a.doc+a.rev+a.appr+a.qa)/5,0)/auditAreas.length);
+    if($('#auditScore'))$('#auditScore').textContent=total;
+    if($('#auditProg'))$('#auditProg').style.width=total+'%';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER: RISK REGISTER
+// ═══════════════════════════════════════════════════════════════
+function renderRisk(filter='all'){
+    const data=filter==='all'?risks:risks.filter(r=>r.severity===filter);
+    let html=`<table class="data-table"><thead><tr><th>Risk</th><th>Category</th><th>Likelihood</th><th>Impact</th><th>Severity</th><th>Mitigation</th><th>Owner</th></tr></thead><tbody>`;
+    data.forEach(r=>{
+        html+=`<tr><td class="hl">${r.risk}</td><td>${r.category}</td><td>${r.likelihood}</td><td>${r.impact}</td>
+            <td>${riskBadge(r.severity)}</td><td>${r.mitigation}</td><td>${r.owner}</td></tr>`;
+    });
+    html+='</tbody></table>';
+    $('#riskTableWrap').innerHTML=html;
+}
+
+$('#riskFilter')?.addEventListener('click',e=>{
+    if(e.target.classList.contains('ftab')){
+        $$('#riskFilter .ftab').forEach(t=>t.classList.remove('active'));
+        e.target.classList.add('active');
+        renderRisk(e.target.dataset.filter);
+    }
+});
+
+function renderHeatmap(){
+    const levels=['Low','Medium','High','Critical'];
+    const colors={
+        Low:'rgba(34,197,94,.12)',Medium:'rgba(59,130,246,.15)',
+        High:'rgba(245,158,11,.2)',Critical:'rgba(239,68,68,.25)'
+    };
+    const borders={
+        Low:'rgba(34,197,94,.3)',Medium:'rgba(59,130,246,.35)',
+        High:'rgba(245,158,11,.4)',Critical:'rgba(239,68,68,.45)'
+    };
+    const textC={
+        Low:'#86efac',Medium:'#93c5fd',High:'#fcd34d',Critical:'#fca5a5'
+    };
+    const sv={Low:1,Medium:2,High:3,Critical:4};
+
+    let html='<div class="hmap-label" style="grid-column:1"></div>';
+    levels.forEach(l=>html+=`<div class="hmap-label" style="font-size:9px;text-align:center">${l}</div>`);
+
+    levels.forEach(lh=>{
+        html+=`<div class="hmap-label">${lh}</div>`;
+        levels.forEach(imp=>{
+            const count=risks.filter(r=>r.likelihood===lh&&r.impact===imp).length;
+            const sc=sv[lh]*sv[imp];
+            const sev=sc>=12?'Critical':sc>=6?'High':sc>=3?'Medium':'Low';
+            html+=`<div class="hmap-cell" style="background:${colors[sev]};border:1px solid ${borders[sev]};color:${textC[sev]}">${count}</div>`;
+        });
+    });
+    $('#riskHeatmap').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════════════════════════════
+let chNOI,chEOS;
+const chartDefaults={
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#5a6b85',font:{family:"'DM Mono',monospace",size:10},boxWidth:12,padding:16}}},
+};
+
+function renderNOIChart(){
+    const ctx=$('#chartNOI');
+    if(!ctx||typeof Chart==='undefined')return;
+    if(chNOI)chNOI.destroy();
+    const months=['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'];
+    const data=[3.35,3.38,3.41,3.44,3.46,3.48,3.50,3.52,3.53,3.55,3.56,3.58];
+    chNOI=new Chart(ctx,{
+        type:'line',
+        data:{labels:months,datasets:[{
+            label:'Monthly NOI ($M)',data,
+            borderColor:'#c8a55a',backgroundColor:'rgba(200,165,90,.06)',
+            fill:true,tension:.35,pointRadius:3,pointBackgroundColor:'#c8a55a',
+            pointBorderColor:'transparent',borderWidth:2
+        }]},
+        options:{...chartDefaults,
+            scales:{
+                x:{ticks:{color:'#3d4d65',font:{family:"'DM Mono',monospace",size:10}},grid:{color:'rgba(255,255,255,.03)'}},
+                y:{ticks:{color:'#3d4d65',font:{family:"'DM Mono',monospace",size:10},callback:v=>'$'+v.toFixed(1)+'M'},grid:{color:'rgba(255,255,255,.03)'}}
+            }
+        }
+    });
+}
+
+function renderEOSChart(){
+    const ctx=$('#chartEOS');
+    if(!ctx||typeof Chart==='undefined')return;
+    if(chEOS)chEOS.destroy();
+    const weeks=['W16','W17','W18','W19','W20','W21','W22','W23'];
+    chEOS=new Chart(ctx,{
+        type:'bar',
+        data:{labels:weeks,datasets:[
+            {label:'Green',data:[6,6,7,7,8,8,8,8],backgroundColor:'rgba(34,197,94,.5)',borderRadius:3},
+            {label:'Amber',data:[2,3,2,2,1,1,1,1],backgroundColor:'rgba(245,158,11,.5)',borderRadius:3},
+            {label:'Red',data:[2,1,1,1,1,1,1,1],backgroundColor:'rgba(239,68,68,.5)',borderRadius:3}
+        ]},
+        options:{...chartDefaults,
+            scales:{
+                x:{stacked:true,ticks:{color:'#3d4d65',font:{family:"'DM Mono',monospace",size:10}},grid:{color:'rgba(255,255,255,.03)'}},
+                y:{stacked:true,max:10,ticks:{color:'#3d4d65',font:{family:"'DM Mono',monospace",size:10},stepSize:2},grid:{color:'rgba(255,255,255,.03)'}}
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════════════════════
+$('#globalSearch')?.addEventListener('input',function(){
+    const q=this.value.toLowerCase().trim();
+    if(!q)return;
+    // Search properties
+    const propMatch=properties.filter(p=>p.name.toLowerCase().includes(q)||p.city.toLowerCase().includes(q));
+    if(propMatch.length){
+        nav('assetmgmt');
+        // Highlight matching rows via filter
+        renderAsset('all');
+        setTimeout(()=>{
+            $$('#assetTableWrap tr').forEach(tr=>{
+                const txt=tr.textContent.toLowerCase();
+                if(txt.includes(q)){tr.style.background='rgba(200,165,90,.06)';}
+                else if(q.length>2){tr.style.opacity='.4';}
+            });
+        },50);
+    }
+    // Search acquisitions
+    const acqMatch=acquisitions.filter(a=>a.deal.toLowerCase().includes(q)||a.owner.toLowerCase().includes(q));
+    if(acqMatch.length&&!propMatch.length){
+        nav('acquisitions');
+        renderAcq('all');
+        setTimeout(()=>{
+            $$('#acqTableWrap tr').forEach(tr=>{
+                const txt=tr.textContent.toLowerCase();
+                if(txt.includes(q)){tr.style.background='rgba(200,165,90,.06)';}
+                else if(q.length>2){tr.style.opacity='.4';}
+            });
+        },50);
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════
+$('#notifBtn')?.addEventListener('click',()=>{
+    toast('The Meridian — DSCR at 1.22x (covenant: 1.35x)','⚠');
+    setTimeout(()=>toast('Magnolia Park — DSCR at 1.18x (covenant: 1.35x)','⚠'),400);
+    setTimeout(()=>toast('SOP Maturity Score: 62 — below 80 target','◉'),800);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+    if(e.target.tagName==='INPUT')return;
+    const shortcuts={
+        '1':'executive','2':'eos','3':'acquisitions','4':'assetmgmt','5':'investors',
+        '6':'lender','7':'accountability','8':'audit','9':'risk','0':'day90'
+    };
+    if(shortcuts[e.key])nav(shortcuts[e.key]);
+    if(e.key==='/'){e.preventDefault();$('#globalSearch')?.focus();}
+});
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+function init(){
+    renderExecutive();
+    renderEOS();
+    renderAcq();
+    renderAsset();
+    renderInvestors();
+    renderLender();
+    renderAcct();
+    renderAudit();
+    renderRisk();
+    renderHeatmap();
+    renderNOIChart();
+    // Welcome toast
+    setTimeout(()=>toast('IIOP loaded — press / to search, 1-0 for modules','◈'),600);
+}
+
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}
+else{init();}
+</script>
+</body>
+</html>
